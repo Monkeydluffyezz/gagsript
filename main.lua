@@ -1,3 +1,22 @@
+-- GagScript Tarayıcı (Shop Remote Bulucu)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+print("--- GagScript Remote Taraması Başladı ---")
+
+local function scan(parent)
+    for _, v in pairs(parent:GetDescendants()) do
+        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+            -- Eğer isminde Buy, Purchase, Shop veya Seed geçiyorsa ekrana yazdır
+            if v.Name:find("Buy") or v.Name:find("Purchase") or v.Name:find("Shop") or v.Name:find("Seed") then
+                warn("BULDUM! Remote Adı: " .. v.Name .. " | Yolu: " .. v:GetFullName())
+            end
+        end
+    end
+end
+
+scan(ReplicatedStorage)
+print("--- Tarama Bitti, F9 Konsoluna Bak! ---")
+
 -- GagScript Hub X | Glow a Garden Edition
 -- Keybind: K
 
