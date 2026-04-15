@@ -1,23 +1,4 @@
--- GagScript Tarayıcı (Shop Remote Bulucu)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-print("--- GagScript Remote Taraması Başladı ---")
-
-local function scan(parent)
-    for _, v in pairs(parent:GetDescendants()) do
-        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-            -- Eğer isminde Buy, Purchase, Shop veya Seed geçiyorsa ekrana yazdır
-            if v.Name:find("Buy") or v.Name:find("Purchase") or v.Name:find("Shop") or v.Name:find("Seed") then
-                warn("BULDUM! Remote Adı: " .. v.Name .. " | Yolu: " .. v:GetFullName())
-            end
-        end
-    end
-end
-
-scan(ReplicatedStorage)
-print("--- Tarama Bitti, F9 Konsoluna Bak! ---")
-
--- GagScript Hub X | Glow a Garden Edition
+-- GagScript Hub X | Glow a Garden - LURAPH DECODED VERSION
 -- Keybind: K
 
 local Players = game:GetService("Players")
@@ -27,27 +8,31 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- GİZLİ REMOTE YOLLARI (Sızıntıdan Alındı)
+local Remotes = {}
+task.spawn(function()
+    Remotes.Collect = ReplicatedStorage:FindFirstChild("Collect", true)
+    Remotes.Water = ReplicatedStorage:FindFirstChild("Water_RE", true)
+    Remotes.Crate = ReplicatedStorage:FindFirstChild("CosmeticCrateService", true)
+    Remotes.ActivePet = ReplicatedStorage:FindFirstChild("ActivePetService", true)
+    Remotes.Mutation = ReplicatedStorage:FindFirstChild("PetMutationMachineService_RE", true)
+    Remotes.Cooking = ReplicatedStorage:FindFirstChild("CookingPotService_RE", true)
+end)
+
 -- Eskisini Temizle
-if game.CoreGui:FindFirstChild("GagHubV2") then game.CoreGui.GagHubV2:Destroy() end
+if game.CoreGui:FindFirstChild("GagHubV3") then game.CoreGui.GagHubV3:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GagHubV2"
+ScreenGui.Name = "GagHubV3"
 ScreenGui.Parent = game.CoreGui
 
 -- ANA ÇERÇEVE
-local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Parent = ScreenGui
+local Main = Instance.new("Frame", ScreenGui)
 Main.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+Main.Position = UDim2.new(0.5, -260, 0.5, -190)
 Main.Size = UDim2.new(0, 520, 0, 380)
 Main.ClipsDescendants = true
-Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.Visible = false
-
-local UICorner = Instance.new("UICorner", Main)
-UICorner.CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 
 -- ÜST ŞERİT (Neon Kırmızı)
 local TopBar = Instance.new("Frame", Main)
@@ -55,7 +40,7 @@ TopBar.Size = UDim2.new(1, 0, 0, 3)
 TopBar.BackgroundColor3 = Color3.fromRGB(255, 40, 40)
 TopBar.BorderSizePixel = 0
 
--- SEKMELER ARASI GEÇİŞ MANTIĞI
+-- SEKMELER ARASI GEÇİŞ
 local Pages = {}
 local TabButtons = {}
 
@@ -73,7 +58,6 @@ SideBar.Size = UDim2.new(0, 130, 1, -3)
 SideBar.Position = UDim2.new(0, 0, 0, 3)
 SideBar.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
 SideBar.BorderSizePixel = 0
-
 local TabLayout = Instance.new("UIListLayout", SideBar)
 TabLayout.Padding = UDim.new(0, 2)
 
@@ -103,7 +87,6 @@ local function CreateTab(name)
     
     Pages[name] = Page
     TabButtons[name] = Btn
-    
     Btn.MouseButton1Click:Connect(function() ShowPage(name) end)
 end
 
@@ -153,61 +136,135 @@ local function CreateToggle(parent, text, desc, callback)
     end)
 end
 
--- SEKMELERİ OLUŞTUR
-CreateTab("Shop")
+-- SEKMELER
+CreateTab("Farming")
+CreateTab("Pets")
+CreateTab("Machines")
 CreateTab("Player")
 
--- SHOP ÖZELLİKLERİ
-CreateToggle(Pages.Shop, "Instant Buy Seeds", "Bütün tohumları saniyeler içinde alır.", function(state)
-    _G.BuySeeds = state
-    while _G.BuySeeds do
-        -- Glow a Garden Seed Remotelarını tetikler
-        local seeds = {"Carrot", "Tomato", "GlowingBerry", "GoldenBean"} -- Örnekler
-        for _, seed in pairs(seeds) do
-            ReplicatedStorage.Events.Shop.BuyItem:FireServer(seed, 1)
+-- FARMING (Tarla/Toplama)
+CreateToggle(Pages.Farming, "Auto Collect Plants", "Bütün büyümüş bitkileri anında toplar.", function(state)
+    _G.AutoCollect = state
+    task.spawn(function()
+        while _G.AutoCollect do
+            local plants = workspace:FindFirstChild("Plants_Physical")
+            if plants and Remotes.Collect then
+                for _, plant in pairs(plants:GetChildren()) do
+                    if plant:IsA("Model") then
+                        pcall(function() Remotes.Collect:FireServer({plant}) end)
+                    end
+                end
+            end
+            task.wait(0.2)
         end
-        task.wait(0.5)
-    end
+    end)
 end)
 
-CreateToggle(Pages.Shop, "Auto Gear Buyer", "Bütün ekipmanları envantere çeker.", function(state)
-    _G.BuyGears = state
-    -- Gear Remote logic buraya
-end)
-
-CreateToggle(Pages.Shop, "Infinite Eggs", "Yumurtaları durmadan açar.", function(state)
-    _G.BuyEggs = state
-end)
-
--- PLAYER ÖZELLİKLERİ
-CreateToggle(Pages.Player, "Gag Speed", "Karakteri uçurur.", function(state)
-    LocalPlayer.Character.Humanoid.WalkSpeed = state and 120 or 16
-end)
-
-local noclip = false
-RunService.Stepped:Connect(function()
-    if noclip and LocalPlayer.Character then
-        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") then v.CanCollide = false end
+CreateToggle(Pages.Farming, "Auto Water", "Kuruyan bitkileri otomatik sular.", function(state)
+    _G.AutoWater = state
+    task.spawn(function()
+        while _G.AutoWater do
+            local plants = workspace:FindFirstChild("Plants_Physical")
+            if plants and Remotes.Water then
+                for _, plant in pairs(plants:GetChildren()) do
+                    if plant:IsA("Model") then
+                        pcall(function() Remotes.Water:FireServer(plant:GetPivot().Position) end)
+                    end
+                end
+            end
+            task.wait(1)
         end
+    end)
+end)
+
+-- PETS (Evcil Hayvanlar)
+CreateToggle(Pages.Pets, "Auto Feed Pets", "Aç kalan petleri otomatik besler.", function(state)
+    _G.AutoFeed = state
+    task.spawn(function()
+        while _G.AutoFeed do
+            local pets = workspace:FindFirstChild("PetsPhysical")
+            if pets and Remotes.ActivePet then
+                for _, pet in pairs(pets:GetChildren()) do
+                    if pet:GetAttribute("OWNER") == LocalPlayer.Name then
+                        local uuid = pet:GetAttribute("UUID")
+                        if uuid then
+                            pcall(function() Remotes.ActivePet:FireServer("Feed", uuid) end)
+                        end
+                    end
+                end
+            end
+            task.wait(2)
+        end
+    end)
+end)
+
+CreateToggle(Pages.Pets, "Auto Mutate", "Petleri otomatik mutasyon makinesine atar.", function(state)
+    _G.AutoMutate = state
+    task.spawn(function()
+        while _G.AutoMutate do
+            if Remotes.Mutation then
+                pcall(function() Remotes.Mutation:FireServer("Submit HeldPet") end)
+                task.wait(0.5)
+                pcall(function() Remotes.Mutation:FireServer("StartMachine") end)
+                task.wait(0.5)
+                pcall(function() Remotes.Mutation:FireServer("ClaimMutatedPet") end)
+            end
+            task.wait(1)
+        end
+    end)
+end)
+
+-- MACHINES (Kutular ve Aşçılık)
+CreateToggle(Pages.Machines, "Auto Open Crates", "Envanterdeki kutuları saniyesinde açar.", function(state)
+    _G.AutoCrate = state
+    task.spawn(function()
+        while _G.AutoCrate do
+            local objects = workspace:FindFirstChild("Objects_Physical")
+            if objects and Remotes.Crate then
+                for _, obj in pairs(objects:GetChildren()) do
+                    if obj:GetAttribute("OWNER") == LocalPlayer.Name and obj:GetAttribute("CrateType") then
+                        if obj:GetAttribute("TimeToOpen") <= 0 then
+                            pcall(function() Remotes.Crate:FireServer("OpenCrate", obj) end)
+                        end
+                    end
+                end
+            end
+            task.wait(1)
+        end
+    end)
+end)
+
+CreateToggle(Pages.Machines, "Auto Cook Best", "Aşçılık potunda en iyi yemeği otomatik yapar.", function(state)
+    _G.AutoCook = state
+    task.spawn(function()
+        while _G.AutoCook do
+            if Remotes.Cooking then
+                local objects = workspace:FindFirstChild("Cosmetic_Physical")
+                if objects then
+                    for _, obj in pairs(objects:GetChildren()) do
+                        pcall(function() Remotes.Cooking:FireServer("CookBest", obj) end)
+                    end
+                end
+            end
+            task.wait(2)
+        end
+    end)
+end)
+
+-- PLAYER
+CreateToggle(Pages.Player, "Gag Speed", "Yürüme hızını 100 yapar.", function(state)
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = state and 100 or 16
     end
 end)
 
-CreateToggle(Pages.Player, "NoClip", "Duvarlar senin için yok olur.", function(state)
-    noclip = state
+-- Menüyü Göster/Gizle Tuşu (K)
+local visible = true
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.K then
+        visible = not visible
+        Main.Visible = visible
+    end
 end)
 
--- AÇILIŞ ANİMASYONU VE KONTROL
-local function toggle()
-    if Main.Visible then
-        Main:TweenSize(UDim2.new(0, 0, 0, 0), "In", "Quad", 0.3, true, function() Main.Visible = false end)
-    else
-        Main.Visible = true
-        Main.Size = UDim2.new(0, 0, 0, 0)
-        Main:TweenSize(UDim2.new(0, 520, 0, 380), "Out", "Back", 0.4, true)
-    end
-end
-
-UserInputService.InputBegan:Connect(function(i) if i.KeyCode == Enum.KeyCode.K then toggle() end end)
-ShowPage("Shop")
-toggle()
+ShowPage("Farming")
